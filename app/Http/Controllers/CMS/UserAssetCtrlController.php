@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
-use App\Models\Company;
+use App\Models\AssetController;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class CompanyController extends Controller
+class UserAssetCtrlController extends Controller
 {
     /**
      * index
@@ -21,9 +22,8 @@ class CompanyController extends Controller
     public function index(Request $request, $id = null)
     {
         $data = [];
-        $items = Company::query();
-        $items->orderBy('code', 'asc');
-        $items->where('id', '!=', 'dummy-001');
+        $items = AssetController::query();
+        $items->with(['user:id,name,nik,email,phone']);
 
         if (isset($request->filter) && $request->filter) {
             $filter = json_decode($request->filter, true);
@@ -34,8 +34,10 @@ class CompanyController extends Controller
             if (isset($request->q) && $request->q) {
                 $q = $request->q;
                 $items->where(function ($query) use ($q) {
-                    $query->orWhere('name', 'like', '%' . $q . '%')
-                        ->orWhere('code', 'like', '%' . $q . '%');
+                    $query->orWhereHas('user', function ($query) use ($q) {
+                            $query->where('name', 'like', '%' . $q . '%')
+                                ->orWhere('nik', 'like', '%' . $q . '%');
+                        });
                 });
             }
             if (isset($request->limit) && ((int) $request->limit) > 0) {
@@ -62,9 +64,7 @@ class CompanyController extends Controller
     {
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
-            'code' => ['required', 'string', Rule::unique(Company::class, 'code')],
-            'name' => 'required|string|max:128',
-            'status' => 'required|numeric:in:0,1'
+            'user_id' => ['required', 'string', Rule::exists(User::class, 'id')]
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -74,10 +74,8 @@ class CompanyController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = new Company();
-        $item->code = $data->code;
-        $item->name = $data->name;
-        $item->status = $data->status;
+        $item = new AssetController();
+        $item->user_id = $data->user_id;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
         return response()->json($r, Response::HTTP_OK);
@@ -93,10 +91,8 @@ class CompanyController extends Controller
     {
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
-            'id' => ['required', 'string', Rule::exists(Company::class, 'id')],
-            'code' => ['required', 'string', Rule::unique(Company::class, 'code')->ignore($data['id'])],
-            'name' => 'required|string|max:128',
-            'status' => 'required|numeric:in:0,1'
+            'id' => ['required', 'string', Rule::exists(AssetController::class, 'id')],
+            'user_id' => ['required', 'string', Rule::exists(User::class, 'id')]
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -106,37 +102,8 @@ class CompanyController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = Company::where('id', $data->id)->first();
-        $item->name = $data->name;
-        $item->code = $data->code;
-        $item->status = $data->status;
-        $item->save();
-        $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
-        return response()->json($r, Response::HTTP_OK);
-    }
-
-    /**
-     * set_status
-     *
-     * @param  mixed $request
-     * @return void
-     */
-    public function set_status(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'id' => ['required', 'string', Rule::exists(Company::class, 'id')],
-            'status' => 'required|numeric:in:0,1'
-        ]);
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                'wrong' => $validator->errors()
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $data = (object) $validator->validated();
-        $item = Company::where('id', $data->id)->first();
-        $item->status = $data->status;
+        $item = AssetController::where('id', $data->id)->first();
+        $item->user_id = $data->user_id;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
         return response()->json($r, Response::HTTP_OK);
@@ -151,7 +118,7 @@ class CompanyController extends Controller
     public function delete(Request $request)
     {
         $ids = json_decode($request->getContent());
-        Company::whereIn('id', $ids)->delete();
+        AssetController::whereIn('id', $ids)->delete();
         return $this->index($request);
     }
 }

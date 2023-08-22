@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
-use App\Models\JobPosition;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -26,8 +26,7 @@ class UserController extends Controller
         $items = User::query();
         $items->orderBy('nik', 'asc');
         $items->with([
-            'job_position:id,role_id,name',
-            'job_position.role:id,name'
+            'role:id,name'
         ]);
 
         if (isset($request->filter) && $request->filter) {
@@ -43,11 +42,8 @@ class UserController extends Controller
                         ->orWhere('email', 'like', '%' . $q . '%')
                         ->orWhere('nik', 'like', '%' . $q . '%')
                         ->orWhere('phone', 'like', '%' . $q . '%')
-                        ->orWhereHas('job_position', function ($query) use ($q) {
-                            $query->where('name', 'like', '%' . $q . '%')
-                                ->orWhereHas('role', function ($query) use ($q) {
-                                    $query->where('name', 'like', '%' . $q . '%');
-                                });
+                        ->orWhereHas('role', function ($query) use ($q) {
+                            $query->where('name', 'like', '%' . $q . '%');
                         });
                 });
             }
@@ -73,10 +69,10 @@ class UserController extends Controller
      */
     public function create(Request $request)
     {
-        abort(404);
+        //abort(404);
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
-            'job_position_id' => ['required', 'string', Rule::exists(JobPosition::class, 'id')],
+            'role_id' => ['required', 'string', Rule::exists(Role::class, 'id')],
             'nik' => ['required', 'string', Rule::unique(User::class, 'nik')],
             'name' => 'required|string|max:128',
             'email' => ['required', 'email', Rule::unique(User::class, 'email')],
@@ -93,7 +89,7 @@ class UserController extends Controller
 
         $data = (object) $validator->validated();
         $item = new User();
-        $item->job_position_id = $data->job_position_id;
+        $item->role_id = $data->role_id;
         $item->nik = $data->nik;
         $item->name = $data->name;
         $item->email = $data->email;
@@ -116,7 +112,7 @@ class UserController extends Controller
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
             'id' => ['required', 'string', Rule::exists(User::class, 'id')],
-            'job_position_id' => ['required', 'string', Rule::exists(JobPosition::class, 'id')],
+            'role_id' => ['required', 'string', Rule::exists(Role::class, 'id')],
             // 'nik' => ['required', 'string', Rule::unique(User::class, 'nik')->ignore($data['id'])],
             // 'name' => 'required|string|max:128',
             'email' => ['required', 'email', Rule::unique(User::class, 'email')->ignore($data['id'])],
@@ -133,7 +129,7 @@ class UserController extends Controller
 
         $data = (object) $validator->validated();
         $item = User::where('id', $data->id)->first();
-        $item->job_position_id = $data->job_position_id;
+        $item->role_id = $data->role_id;
         // $item->nik = $data->nik;
         // $item->name = $data->name;
         $item->email = $data->email;

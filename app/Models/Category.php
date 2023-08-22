@@ -9,8 +9,8 @@ class Category extends BaseModel
      *
      * @return void
      */
-    public function materials()
+    public function sub_categories()
     {
-        return $this->hasMany(Material::class, 'category_id', 'id');
+        return $this->hasMany(SubCategory::class);
     }
 }

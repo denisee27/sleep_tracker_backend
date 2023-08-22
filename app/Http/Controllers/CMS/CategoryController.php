@@ -24,7 +24,7 @@ class CategoryController extends Controller
     {
         $data = [];
         $items = Category::query();
-        $items->orderBy('name', 'asc');
+        $items->orderBy('code', 'asc');
 
         if (isset($request->filter) && $request->filter) {
             $filter = json_decode($request->filter, true);
@@ -36,6 +36,7 @@ class CategoryController extends Controller
                 $q = $request->q;
                 $items->where(function ($query) use ($q) {
                     $query->orWhere('name', 'like', '%' . $q . '%')
+                        ->orWhere('code', 'like', '%' . $q . '%')
                         ->orWhere('description', 'like', '%' . $q . '%');
                 });
             }
@@ -63,6 +64,7 @@ class CategoryController extends Controller
     {
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
+            'code' => ['required', 'string', Rule::unique(Category::class, 'code')],
             'name' => 'required|string|max:128',
             'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
@@ -76,7 +78,8 @@ class CategoryController extends Controller
 
         $data = (object) $validator->validated();
         $item = new Category();
-        $item->name = ucwords(strtolower($data->name));
+        $item->code = $data->code;
+        $item->name = ucwords($data->name);
         $item->description = $data->description;
         $item->status = $data->status;
         $item->save();
@@ -95,6 +98,7 @@ class CategoryController extends Controller
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
             'id' => ['required', 'string', Rule::exists(Category::class, 'id')],
+            'code' => ['required', 'string', Rule::unique(Category::class, 'code')->ignore($data['id'])],
             'name' => 'required|string|max:128',
             'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
@@ -108,7 +112,8 @@ class CategoryController extends Controller
 
         $data = (object) $validator->validated();
         $item = Category::where('id', $data->id)->first();
-        $item->name = ucwords(strtolower($data->name));
+        $item->code = $data->code;
+        $item->name = ucwords($data->name);
         $item->description = $data->description;
         $item->status = $data->status;
         $item->save();
@@ -164,6 +169,6 @@ class CategoryController extends Controller
      */
     public function download(Request $request)
     {
-        return Excel::download(new CategoryExport($request), 'IMS-Material-Categories.xlsx');
+        return Excel::download(new CategoryExport($request), 'AMS-Asset-Categories.xlsx');
     }
 }

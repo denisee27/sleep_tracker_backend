@@ -2,7 +2,7 @@
 
 namespace App\Exports;
 
-use App\Models\Category;
+use App\Models\SubCategory;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -11,7 +11,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStrictNullComparison;
 
-class CategoryExport implements
+class SubCategoryExport implements
     FromQuery,
     WithMapping,
     WithHeadings,
@@ -44,14 +44,18 @@ class CategoryExport implements
      */
     public function query()
     {
-        $items = Category::query();
-        $items->orderBy('name', 'asc');
+        $items = SubCategory::query();
+        $items->orderBy('code', 'asc');
         $q = (isset($this->req->q) && $this->req->q == 'null') ? null : $this->req->q;
         if (isset($q) && $q) {
             $items->where(function ($query) use ($q) {
                 $query->orWhere('name', 'like', '%' . $q . '%')
                     ->orWhere('code', 'like', '%' . $q . '%')
-                    ->orWhere('description', 'like', '%' . $q . '%');
+                    ->orWhere('description', 'like', '%' . $q . '%')
+                    ->orWhereHas('category', function ($query) use ($q) {
+                        $query->where('name', 'like', '%' . $q . '%')
+                            ->orWhere('code', 'like', '%' . $q . '%');
+                    });
             });
         }
         return $items;
@@ -66,6 +70,8 @@ class CategoryExport implements
     public function map($row): array
     {
         return [
+            $row->category->code,
+            $row->category->name,
             $row->code,
             $row->name,
             $row->description,
@@ -92,8 +98,10 @@ class CategoryExport implements
     public function headings(): array
     {
         return [
-            'Code',
-            'Name',
+            'Category Code',
+            'Category Name',
+            'SubCategory Code',
+            'SubCategory Name',
             'Description',
             'Status',
             'Created at'

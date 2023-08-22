@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
         $item->nik = '112233';
         $item->name = 'Super Administrator';
         $item->email = 'admin@demo.com';
-        $item->password = Hash::make('admin123');
+        $item->password = sha1(md5(sha1('admin123')) . 'Tr1@5M1TR4');
         $item->save();
         DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
     }

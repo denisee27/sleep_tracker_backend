@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\CMS;
 
+use App\Exports\CategoryExport;
 use App\Http\Controllers\Controller;
-use App\Models\Company;
-use App\Models\Project;
+use App\Models\Category;
+use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
-class ProjectController extends Controller
+class SubCategoryController extends Controller
 {
     /**
      * index
@@ -22,10 +24,9 @@ class ProjectController extends Controller
     public function index(Request $request, $id = null)
     {
         $data = [];
-        $items = Project::query();
+        $items = SubCategory::query();
         $items->orderBy('code', 'asc');
-        $items->with(['company:id,code,name']);
-        $items->where('id', '!=', 'dummy-001');
+        $items->with(['category:id,code,name']);
 
         if (isset($request->filter) && $request->filter) {
             $filter = json_decode($request->filter, true);
@@ -38,9 +39,10 @@ class ProjectController extends Controller
                 $items->where(function ($query) use ($q) {
                     $query->orWhere('name', 'like', '%' . $q . '%')
                         ->orWhere('code', 'like', '%' . $q . '%')
-                        ->orWhereHas('company', function ($query) use ($q) {
-                            $query->where('code', 'like', '%' . $q . '%')
-                                ->orWhere('name', 'like', '%' . $q . '%');
+                        ->orWhere('description', 'like', '%' . $q . '%')
+                        ->orWhereHas('category', function ($query) use ($q) {
+                            $query->where('name', 'like', '%' . $q . '%')
+                                ->orWhere('code', 'like', '%' . $q . '%');
                         });
                 });
             }
@@ -68,9 +70,10 @@ class ProjectController extends Controller
     {
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
-            'company_id' => ['required', 'string', Rule::exists(Company::class, 'id')],
-            'code' => ['required', 'string', Rule::unique(Project::class, 'code')],
+            'category_id' => ['required', 'string', Rule::exists(Category::class, 'id')],
+            'code' => ['required', 'string', Rule::unique(SubCategory::class, 'code')],
             'name' => 'required|string|max:128',
+            'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
         ]);
         if ($validator->fails()) {
@@ -81,10 +84,11 @@ class ProjectController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = new Project();
-        $item->company_id = $data->company_id;
+        $item = new SubCategory();
+        $item->category_id = $data->category_id;
         $item->code = $data->code;
-        $item->name = $data->name;
+        $item->name = ucwords($data->name);
+        $item->description = $data->description;
         $item->status = $data->status;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
@@ -101,10 +105,11 @@ class ProjectController extends Controller
     {
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
-            'id' => ['required', 'string', Rule::exists(Project::class, 'id')],
-            'company_id' => ['required', 'string', Rule::exists(Company::class, 'id')],
-            'code' => ['required', 'string', Rule::unique(Project::class, 'code')->ignore($data['id'])],
+            'id' => ['required', 'string', Rule::exists(SubCategory::class, 'id')],
+            'category_id' => ['required', 'string', Rule::exists(Category::class, 'id')],
+            'code' => ['required', 'string', Rule::unique(SubCategory::class, 'code')->ignore($data['id'])],
             'name' => 'required|string|max:128',
+            'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
         ]);
         if ($validator->fails()) {
@@ -115,10 +120,11 @@ class ProjectController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = Project::where('id', $data->id)->first();
-        $item->company_id = $data->company_id;
-        $item->name = $data->name;
+        $item = SubCategory::where('id', $data->id)->first();
+        $item->category_id = $data->category_id;
         $item->code = $data->code;
+        $item->name = ucwords($data->name);
+        $item->description = $data->description;
         $item->status = $data->status;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
@@ -134,7 +140,7 @@ class ProjectController extends Controller
     public function set_status(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => ['required', 'string', Rule::exists(Project::class, 'id')],
+            'id' => ['required', 'string', Rule::exists(Category::class, 'id')],
             'status' => 'required|numeric:in:0,1'
         ]);
         if ($validator->fails()) {
@@ -145,7 +151,7 @@ class ProjectController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = Project::where('id', $data->id)->first();
+        $item = SubCategory::where('id', $data->id)->first();
         $item->status = $data->status;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
@@ -161,7 +167,18 @@ class ProjectController extends Controller
     public function delete(Request $request)
     {
         $ids = json_decode($request->getContent());
-        Project::whereIn('id', $ids)->delete();
+        SubCategory::whereIn('id', $ids)->delete();
         return $this->index($request);
+    }
+
+    /**
+     * download
+     *
+     * @param  mixed $request
+     * @return void
+     */
+    public function download(Request $request)
+    {
+        return Excel::download(new CategoryExport($request), 'AMS-Asset-SubCategories.xlsx');
     }
 }

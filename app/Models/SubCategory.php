@@ -2,9 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 
-class SubCategory extends Model
+class SubCategory extends BaseModel
 {
-    //
+    /**
+     * category
+     *
+     * @return void
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 }

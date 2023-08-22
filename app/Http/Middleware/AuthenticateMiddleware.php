@@ -78,7 +78,7 @@ class AuthenticateMiddleware
             goto response;
         }
         $user_menu = collect($user_menu);
-        $access_link = $user_menu->where('link', $currrent_url[1])->first();
+        $access_link = $user_menu->where('link', $currrent_url[0])->first();
         if (!$access_link) {
             return $this->throwError($request, new AccessDeniedHttpException('Access forbidden'));
         }

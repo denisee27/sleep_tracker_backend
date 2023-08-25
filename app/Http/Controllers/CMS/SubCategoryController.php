@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\SubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
@@ -71,7 +72,6 @@ class SubCategoryController extends Controller
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
             'category_id' => ['required', 'string', Rule::exists(Category::class, 'id')],
-            'code' => ['required', 'string', Rule::unique(SubCategory::class, 'code')],
             'name' => 'required|string|max:128',
             'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
@@ -84,13 +84,33 @@ class SubCategoryController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = new SubCategory();
-        $item->category_id = $data->category_id;
-        $item->code = $data->code;
-        $item->name = ucwords($data->name);
-        $item->description = $data->description;
-        $item->status = $data->status;
-        $item->save();
+        DB::beginTransaction();
+        try {
+            $getLast = SubCategory::orderBy('code', 'DESC')
+                ->sharedLock()
+                ->first();
+            $lastNumber = (!$getLast) ? 0 : abs(substr($getLast->code, -3));
+            $makeNumber = 'SC' . sprintf('%03s', $lastNumber + 1);
+            $cekNumber = SubCategory::where('code', $makeNumber)->count();
+            if ($cekNumber > 0) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => Response::HTTP_CONFLICT,
+                    'message' => 'Try again'
+                ], Response::HTTP_CONFLICT);
+            }
+            $item = new SubCategory();
+            $item->category_id = $data->category_id;
+            $item->code = $makeNumber;
+            $item->name = ucwords($data->name);
+            $item->description = $data->description;
+            $item->status = $data->status;
+            $item->save();
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
         return response()->json($r, Response::HTTP_OK);
     }
@@ -107,7 +127,6 @@ class SubCategoryController extends Controller
         $validator = Validator::make($data, [
             'id' => ['required', 'string', Rule::exists(SubCategory::class, 'id')],
             'category_id' => ['required', 'string', Rule::exists(Category::class, 'id')],
-            'code' => ['required', 'string', Rule::unique(SubCategory::class, 'code')->ignore($data['id'])],
             'name' => 'required|string|max:128',
             'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
@@ -122,7 +141,6 @@ class SubCategoryController extends Controller
         $data = (object) $validator->validated();
         $item = SubCategory::where('id', $data->id)->first();
         $item->category_id = $data->category_id;
-        $item->code = $data->code;
         $item->name = ucwords($data->name);
         $item->description = $data->description;
         $item->status = $data->status;

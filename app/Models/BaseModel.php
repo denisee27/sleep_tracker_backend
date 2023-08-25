@@ -49,14 +49,4 @@ class BaseModel extends Model
     {
         return $this->belongsTo(User::class, 'updated_by', 'id');
     }
-
-    /**
-     * deleter
-     *
-     * @return void
-     */
-    public function deleter()
-    {
-        return $this->belongsTo(User::class, 'deleted_by', 'id');
-    }
 }

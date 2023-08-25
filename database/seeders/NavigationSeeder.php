@@ -24,9 +24,10 @@ class NavigationSeeder extends Seeder
 									   (5, 4, 'List PO/Non PO SAP', '', 'purchase-orders', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-22 11:23:37', '2023-08-22 13:08:18'),
 									   (6, 4, 'Request New Asset', '', 'request-asset', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-22 11:24:00', '2023-08-22 11:24:00'),
 									   (7, NULL, 'Settings', 'settings', '', 'null', 5, 1, '2023-08-22 14:50:16', '2023-08-22 14:50:16'),
-									   (8, 7, 'Role', '', 'roles', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-22 14:50:38', '2023-08-22 14:50:38'),
-									   (9, 7, 'User Account', '', 'users', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-22 14:50:58', '2023-08-22 14:50:58'),
-									   (10, 7, 'Asset Controller', '', 'asset-controller', '[\"create\",\"update\",\"delete\"]', 2, 1, '2023-08-22 14:51:34', '2023-08-22 14:51:34');
+									   (8, 7, 'Role', '', 'roles', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-22 14:50:38', '2023-08-24 13:10:59'),
+									   (9, 7, 'User Account', '', 'users', '[\"create\",\"update\",\"delete\"]', 2, 1, '2023-08-22 14:50:58', '2023-08-24 13:11:06'),
+									   (10, 7, 'Asset Controller', '', 'asset-controller', '[\"create\",\"update\",\"delete\"]', 3, 1, '2023-08-22 14:51:34', '2023-08-24 13:11:11'),
+									   (11, 7, 'Company', '', 'companies', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-24 13:11:30', '2023-08-24 13:11:30');
 		";
         DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
         DB::table('navigations')->truncate();

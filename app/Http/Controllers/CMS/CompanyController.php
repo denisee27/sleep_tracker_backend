@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers\CMS;
 
-use App\Exports\CategoryExport;
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Maatwebsite\Excel\Facades\Excel;
 
-class CategoryController extends Controller
+class CompanyController extends Controller
 {
     /**
      * index
@@ -24,7 +21,7 @@ class CategoryController extends Controller
     public function index(Request $request, $id = null)
     {
         $data = [];
-        $items = Category::query();
+        $items = Company::query();
         $items->orderBy('code', 'asc');
 
         if (isset($request->filter) && $request->filter) {
@@ -36,9 +33,8 @@ class CategoryController extends Controller
             if (isset($request->q) && $request->q) {
                 $q = $request->q;
                 $items->where(function ($query) use ($q) {
-                    $query->orWhere('name', 'like', '%' . $q . '%')
-                        ->orWhere('code', 'like', '%' . $q . '%')
-                        ->orWhere('description', 'like', '%' . $q . '%');
+                    $query->where('name', 'like', '%' . $q . '%')
+                        ->orWhere('code', 'like', '%' . $q . '%');
                 });
             }
             if (isset($request->limit) && ((int) $request->limit) > 0) {
@@ -65,6 +61,7 @@ class CategoryController extends Controller
     {
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
+            'code' => ['required', 'string', Rule::unique(Company::class, 'code')],
             'name' => 'required|string|max:128',
             'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
@@ -77,32 +74,12 @@ class CategoryController extends Controller
         }
 
         $data = (object) $validator->validated();
-        DB::beginTransaction();
-        try {
-            $getLast = Category::orderBy('code', 'DESC')
-                ->sharedLock()
-                ->first();
-            $lastNumber = (!$getLast) ? 0 : abs(substr($getLast->code, -3));
-            $makeNumber = 'C' . sprintf('%03s', $lastNumber + 1);
-            $cekNumber = Category::where('code', $makeNumber)->count();
-            if ($cekNumber > 0) {
-                DB::rollBack();
-                return response()->json([
-                    'status' => Response::HTTP_CONFLICT,
-                    'message' => 'Try again'
-                ], Response::HTTP_CONFLICT);
-            }
-            $item = new Category();
-            $item->code = $makeNumber;
-            $item->name = ucwords($data->name);
-            $item->description = $data->description;
-            $item->status = $data->status;
-            $item->save();
-            DB::commit();
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        $item = new Company();
+        $item->code = $data->code;
+        $item->name = ucwords($data->name);
+        $item->status = $data->status;
+        $item->save();
+
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
         return response()->json($r, Response::HTTP_OK);
     }
@@ -117,7 +94,8 @@ class CategoryController extends Controller
     {
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
-            'id' => ['required', 'string', Rule::exists(Category::class, 'id')],
+            'id' => ['required', 'string', Rule::exists(Company::class, 'id')],
+            'code' => ['required', 'string', Rule::unique(Company::class, 'code')],
             'name' => 'required|string|max:128',
             'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
@@ -130,9 +108,9 @@ class CategoryController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = Category::where('id', $data->id)->first();
+        $item = Company::where('id', $data->id)->first();
+        $item->code = $data->code;
         $item->name = ucwords($data->name);
-        $item->description = $data->description;
         $item->status = $data->status;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
@@ -148,7 +126,7 @@ class CategoryController extends Controller
     public function set_status(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => ['required', 'string', Rule::exists(Category::class, 'id')],
+            'id' => ['required', 'string', Rule::exists(Company::class, 'id')],
             'status' => 'required|numeric:in:0,1'
         ]);
         if ($validator->fails()) {
@@ -159,7 +137,7 @@ class CategoryController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = Category::where('id', $data->id)->first();
+        $item = Company::where('id', $data->id)->first();
         $item->status = $data->status;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
@@ -175,18 +153,7 @@ class CategoryController extends Controller
     public function delete(Request $request)
     {
         $ids = json_decode($request->getContent());
-        Category::whereIn('id', $ids)->delete();
+        Company::whereIn('id', $ids)->delete();
         return $this->index($request);
-    }
-
-    /**
-     * download
-     *
-     * @param  mixed $request
-     * @return void
-     */
-    public function download(Request $request)
-    {
-        return Excel::download(new CategoryExport($request), 'AMS-Asset-Categories.xlsx');
     }
 }

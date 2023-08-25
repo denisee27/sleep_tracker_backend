@@ -130,4 +130,13 @@ Route::group(['middleware' => 'auth'], function () {
         Route::post('/update', 'CMS\UserAssetCtrlController@update');
         Route::delete('/delete', 'CMS\UserAssetCtrlController@delete');
     });
+
+    Route::group(['prefix' => 'companies'], function () {
+        Route::get('/', 'CMS\CompanyController@index');
+        Route::get('/{id:[a-zA-Z-?0-9]+}', 'CMS\CompanyController@index');
+        Route::post('/create', 'CMS\CompanyController@create');
+        Route::post('/update', 'CMS\CompanyController@update');
+        Route::post('/set-status', 'CMS\CompanyController@set_status');
+        Route::delete('/delete', 'CMS\CompanyController@delete');
+    });
 });

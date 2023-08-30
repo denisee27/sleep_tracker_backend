@@ -30,29 +30,11 @@ class PurchaseOrderController extends Controller
         $data = [];
         $items = PurchaseOrder::query();
         $items->where('id', '!=', 'dummy-001');
-
-        if (!isset($request->forceView)) {
-            $items->when(!auth()->user()->is_superadmin, function ($q) {
-                $q->where(function ($q) {
-                    $q->where('created_by', auth()->user()->id)
-                        ->orWhereHas('approvals', function ($q) {
-                            $q->where('job_position_id', auth()->user()->job_position_id);
-                        });
-                });
-            });
-        }
-
         $items->orderBy('number', 'desc');
         $items->with([
             'company:id,code,name',
             'project:id,code,name',
             'supplier:id,code,name',
-            'approvals' => function ($q) {
-                $q->select(['job_position_id', 'type', 'type_id', 'status', 'status_name', 'status_order'])
-                    ->where('status', 0)
-                    ->where('show_notification', 1)
-                    ->with(['job_position:id,role_id', 'job_position.role:id,name']);
-            }
         ]);
 
         if (isset($request->to_inbound) && $request->to_inbound) {
@@ -99,10 +81,6 @@ class PurchaseOrderController extends Controller
                 'creator:id,name,job_position_id',
                 'creator.job_position:id,role_id,name',
                 'creator.job_position.role:id,name',
-                'approvals' => function ($q) {
-                    $q->select(['job_position_id', 'type', 'type_id', 'status', 'status_name', 'status_order', 'remarks', 'show_notification', 'updated_by', 'updated_at'])
-                        ->with(['job_position:id,role_id,name', 'job_position.role:id,name', 'updater:id,name']);
-                }
             ]);
             $data['data'] = $items->when(isset($request->transaction_id) && $request->transaction_id, function ($q) use ($id) {
                 $q->where('number', $id);

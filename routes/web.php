@@ -126,9 +126,18 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::group(['prefix' => 'asset-controller'], function () {
         Route::get('/', 'CMS\UserAssetCtrlController@index');
+        Route::get('/{id:[a-zA-Z-?0-9]+}', 'CMS\UserAssetCtrlController@index');
         Route::post('/create', 'CMS\UserAssetCtrlController@create');
         Route::post('/update', 'CMS\UserAssetCtrlController@update');
         Route::delete('/delete', 'CMS\UserAssetCtrlController@delete');
+    });
+
+    Route::group(['prefix' => 'request-asset'], function () {
+        Route::get('/', 'CMS\RequestAssetController@index');
+        Route::get('/{id:[a-zA-Z-?0-9]+}', 'CMS\RequestAssetController@index');
+        Route::post('/create', 'CMS\RequestAssetController@create');
+        Route::post('/update', 'CMS\RequestAssetController@update');
+        Route::delete('/delete', 'CMS\RequestAssetController@delete');
     });
 
     Route::group(['prefix' => 'companies'], function () {

@@ -95,7 +95,7 @@ class CompanyController extends Controller
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
             'id' => ['required', 'string', Rule::exists(Company::class, 'id')],
-            'code' => ['required', 'string', Rule::unique(Company::class, 'code')],
+            'code' => ['required', 'string', Rule::unique(Company::class, 'code')->ignore($data['id'])],
             'name' => 'required|string|max:128',
             'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'

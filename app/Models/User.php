@@ -87,6 +87,16 @@ class User extends BaseModel implements AuthenticatableContract, JWTSubject
     }
 
     /**
+     * superior
+     *
+     * @return mixed
+     */
+    public function superior()
+    {
+        return $this->belongsTo(User::class,'parent_id');
+    }
+
+    /**
      * notifications
      *
      * @return void

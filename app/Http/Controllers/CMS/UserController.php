@@ -26,12 +26,20 @@ class UserController extends Controller
         $items = User::query();
         $items->orderBy('nik', 'asc');
         $items->with([
-            'role:id,name'
+            'role:id,name',
+            'superior:id,name'
         ]);
 
         if (isset($request->filter) && $request->filter) {
             $filter = json_decode($request->filter, true);
             $items->where($filter);
+        }
+
+        if(isset($request->self) && $request->self){
+            $items->whereNot(function ($q) use ($request){
+                $q->where('nik','super-admin')
+                ->orWhere('id',auth()->user()->id);
+            });
         }
 
         if ($id == null) {
@@ -73,6 +81,7 @@ class UserController extends Controller
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
             'role_id' => ['required', 'string', Rule::exists(Role::class, 'id')],
+            'parent_id' => ['nullable', 'string', Rule::exists(User::class, 'id')],
             'nik' => ['required', 'string', Rule::unique(User::class, 'nik')],
             'name' => 'required|string|max:128',
             'email' => ['required', 'email', Rule::unique(User::class, 'email')],
@@ -90,6 +99,7 @@ class UserController extends Controller
         $data = (object) $validator->validated();
         $item = new User();
         $item->role_id = $data->role_id;
+        $item->parent_id = $data->parent_id;
         $item->nik = $data->nik;
         $item->name = $data->name;
         $item->email = $data->email;
@@ -113,6 +123,7 @@ class UserController extends Controller
         $validator = Validator::make($data, [
             'id' => ['required', 'string', Rule::exists(User::class, 'id')],
             'role_id' => ['required', 'string', Rule::exists(Role::class, 'id')],
+            'parent_id' => ['nullable', 'string', Rule::exists(User::class, 'id')],
             // 'nik' => ['required', 'string', Rule::unique(User::class, 'nik')->ignore($data['id'])],
             // 'name' => 'required|string|max:128',
             'email' => ['required', 'email', Rule::unique(User::class, 'email')->ignore($data['id'])],
@@ -130,6 +141,7 @@ class UserController extends Controller
         $data = (object) $validator->validated();
         $item = User::where('id', $data->id)->first();
         $item->role_id = $data->role_id;
+        $item->parent_id = $data->parent_id;
         // $item->nik = $data->nik;
         // $item->name = $data->name;
         $item->email = $data->email;

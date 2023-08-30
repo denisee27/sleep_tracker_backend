@@ -24,7 +24,7 @@ class UserSeeder extends Seeder
         User::truncate();
         $item = new User();
         $item->role_id = Role::get()->pluck('id')->first();
-        $item->nik = '112233';
+        $item->nik = 'super-admin';
         $item->name = 'Super Administrator';
         $item->email = 'admin@demo.com';
         $item->password = sha1(md5(sha1('admin123')) . 'Tr1@5M1TR4');

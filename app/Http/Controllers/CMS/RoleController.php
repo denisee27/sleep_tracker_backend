@@ -23,6 +23,7 @@ class RoleController extends Controller
         $data = [];
         $items = Role::query();
         $items->orderBy('name', 'asc');
+        $items->whereNot('access','["*"]');
 
         if (isset($request->filter) && $request->filter) {
             $filter = json_decode($request->filter, true);
@@ -79,8 +80,6 @@ class RoleController extends Controller
         $item->name = $data->name;
         $item->access = $data->access;
         $item->status = $data->status;
-        $item->allow_mobile_login = $data->allow_mobile_login;
-        $item->dashboard = $data->dashboard;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
         return response()->json($r, Response::HTTP_OK);
@@ -99,8 +98,6 @@ class RoleController extends Controller
             'id' => ['required', 'string', Rule::exists(Role::class, 'id')],
             'name' => 'required|string|max:128',
             'access' => 'required|array',
-            'allow_mobile_login' => 'required|numeric|in:0,1',
-            'dashboard' => 'nullable',
             'status' => 'required|numeric:in:0,1'
         ]);
         if ($validator->fails()) {
@@ -115,8 +112,6 @@ class RoleController extends Controller
         $item->name = $data->name;
         $item->access = $data->access;
         $item->status = $data->status;
-        $item->allow_mobile_login = $data->allow_mobile_login;
-        $item->dashboard = $data->dashboard;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok', 'd' => $data, 'i' => $item];
         return response()->json($r, Response::HTTP_OK);

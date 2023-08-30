@@ -25,7 +25,6 @@ return new class extends Migration
             $table->longText('profile_pic')->nullable();
             $table->string('verification_key')->nullable();
             $table->timestamp('last_login_at')->nullable();
-
             $table->uuid('created_by')->nullable()->index();
             $table->uuid('updated_by')->nullable()->index();
             $table->timestamps(6);

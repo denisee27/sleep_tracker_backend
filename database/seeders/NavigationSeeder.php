@@ -17,17 +17,19 @@ class NavigationSeeder extends Seeder
     {
         $sql = "
 		INSERT INTO `navigations` (`id`, `parent_id`, `name`, `icon`, `link`, `action`, `position`, `status`, `created_at`, `updated_at`) VALUES
-									   (1, NULL, 'Asset Category', 'category', '', 'null', 0, 1, '2023-08-22 11:18:22', '2023-08-22 11:22:41'),
-									   (2, 1, 'Category', '', 'categories', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-22 11:19:04', '2023-08-22 11:19:04'),
-									   (3, 1, 'Sub Category', '', 'sub-categories', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-22 11:19:27', '2023-08-22 11:19:27'),
-									   (4, NULL, 'Asset Purchase', 'receipt', '', 'null', 1, 1, '2023-08-22 11:22:31', '2023-08-22 11:22:31'),
-									   (5, 4, 'List PO/Non PO SAP', '', 'purchase-orders', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-22 11:23:37', '2023-08-22 13:08:18'),
-									   (6, 4, 'Request New Asset', '', 'request-asset', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-22 11:24:00', '2023-08-22 11:24:00'),
-									   (7, NULL, 'Settings', 'settings', '', 'null', 5, 1, '2023-08-22 14:50:16', '2023-08-22 14:50:16'),
-									   (8, 7, 'Role', '', 'roles', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-22 14:50:38', '2023-08-24 13:10:59'),
-									   (9, 7, 'User Account', '', 'users', '[\"create\",\"update\",\"delete\"]', 2, 1, '2023-08-22 14:50:58', '2023-08-24 13:11:06'),
-									   (10, 7, 'Asset Controller', '', 'asset-controller', '[\"create\",\"update\",\"delete\"]', 3, 1, '2023-08-22 14:51:34', '2023-08-24 13:11:11'),
-									   (11, 7, 'Company', '', 'companies', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-24 13:11:30', '2023-08-24 13:11:30');
+									   (1, NULL, 'Asset Category', 'category', '', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-28 16:50:19', '2023-08-28 16:54:25'),
+									   (2, 1, 'Category', '', 'categories', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-28 16:54:11', '2023-08-28 16:54:11'),
+									   (3, 1, 'Sub Category', '', 'sub-categories', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-28 16:55:15', '2023-08-28 16:55:15'),
+									   (4, NULL, 'Vendor & Asset Purchase', 'shopping_cart', '', 'null', 1, 1, '2023-08-29 11:55:53', '2023-08-29 12:55:25'),
+									   (5, 4, 'Vendor', '', 'suppliers', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-29 12:46:37', '2023-08-29 12:56:12'),
+									   (7, 4, 'List PO SAP', '', 'po-sap', '[\"update\",\"delete\"]', 2, 1, '2023-08-29 12:48:28', '2023-08-29 14:45:07'),
+									   (8, 4, 'Request New Asset', '', 'request-asset', '[\"create\",\"update\",\"delete\"]', 3, 1, '2023-08-29 12:53:00', '2023-08-29 12:54:00'),
+									   (9, 4, 'Purchase Order', '', 'purchase-orders', '[\"create\",\"update\",\"delete\"]', 4, 1, '2023-08-29 12:54:27', '2023-08-29 12:57:45'),
+									   (10, 4, 'Company', '', 'companies', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-29 12:56:05', '2023-08-29 12:56:05'),
+									   (11, NULL, 'Settings', 'settings', '', 'null', 2, 1, '2023-08-29 12:59:59', '2023-08-29 13:00:06'),
+									   (12, 11, 'Role', '', 'roles', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-29 13:00:44', '2023-08-29 13:00:44'),
+									   (13, 11, 'User Account', '', 'users', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-29 13:15:59', '2023-08-29 13:15:59'),
+									   (14, 11, 'Asset Controller', '', 'asset-controller', '[\"create\",\"update\",\"delete\"]', 2, 1, '2023-08-29 13:16:38', '2023-08-29 13:30:25');
 		";
         DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
         DB::table('navigations')->truncate();

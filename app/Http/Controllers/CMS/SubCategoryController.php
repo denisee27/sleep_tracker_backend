@@ -73,6 +73,7 @@ class SubCategoryController extends Controller
         $validator = Validator::make($data, [
             'category_id' => ['required', 'string', Rule::exists(Category::class, 'id')],
             'name' => 'required|string|max:128',
+            'uom' => 'required|string|max:128',
             'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
         ]);
@@ -104,6 +105,7 @@ class SubCategoryController extends Controller
             $item->code = $makeNumber;
             $item->name = ucwords($data->name);
             $item->description = $data->description;
+            $item->uom = $data->uom;
             $item->status = $data->status;
             $item->save();
             DB::commit();
@@ -128,6 +130,7 @@ class SubCategoryController extends Controller
             'id' => ['required', 'string', Rule::exists(SubCategory::class, 'id')],
             'category_id' => ['required', 'string', Rule::exists(Category::class, 'id')],
             'name' => 'required|string|max:128',
+            'uom' => 'required|string|max:128',
             'description' => 'nullable|string|max:255',
             'status' => 'required|numeric:in:0,1'
         ]);
@@ -143,6 +146,7 @@ class SubCategoryController extends Controller
         $item->category_id = $data->category_id;
         $item->name = ucwords($data->name);
         $item->description = $data->description;
+        $item->uom = $data->uom;
         $item->status = $data->status;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
@@ -158,7 +162,7 @@ class SubCategoryController extends Controller
     public function set_status(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => ['required', 'string', Rule::exists(Category::class, 'id')],
+            'id' => ['required', 'string', Rule::exists(SubCategory::class, 'id')],
             'status' => 'required|numeric:in:0,1'
         ]);
         if ($validator->fails()) {

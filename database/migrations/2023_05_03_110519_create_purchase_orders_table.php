@@ -25,7 +25,6 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->double('total', 17, 2)->default(0.00);
             $table->boolean('status')->default(0);
-
             $table->uuid('created_by')->nullable()->index();
             $table->uuid('updated_by')->nullable()->index();
             $table->timestamps(6);

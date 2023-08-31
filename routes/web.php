@@ -148,4 +148,13 @@ Route::group(['middleware' => 'auth'], function () {
         Route::post('/set-status', 'CMS\CompanyController@set_status');
         Route::delete('/delete', 'CMS\CompanyController@delete');
     });
+
+    Route::group(['prefix' => 'areas'], function () {
+        Route::get('/', 'CMS\AreaController@index');
+        Route::get('/{id:[a-zA-Z-?0-9]+}', 'CMS\AreaController@index');
+        Route::post('/create', 'CMS\AreaController@create');
+        Route::post('/update', 'CMS\AreaController@update');
+        Route::post('/set-status', 'CMS\AreaController@set_status');
+        Route::delete('/delete', 'CMS\AreaController@delete');
+    });
 });

@@ -13,13 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('assets', function (Blueprint $table) {
+        Schema::create('areas', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('sub_category_id');
-            $table->foreign('sub_category_id')->references('id')->on('sub_categories')->cascadeOnDelete();
-            $table->string('code', 64)->unique();
             $table->string('name', 128);
-            $table->text('description')->nullable();
             $table->boolean('status')->default(1);
             $table->uuid('created_by')->nullable()->index();
             $table->uuid('updated_by')->nullable()->index();
@@ -34,6 +30,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('assets');
+        Schema::dropIfExists('areas');
     }
 };

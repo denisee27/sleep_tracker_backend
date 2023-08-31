@@ -16,6 +16,16 @@ class RequestAsset extends BaseModel
     }
 
     /**
+     * company
+     *
+     * @return void
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class,'created_by');
+    }
+
+    /**
      * details
      *
      * @return void

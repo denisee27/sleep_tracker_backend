@@ -105,7 +105,7 @@ class SubCategoryController extends Controller
             $item->code = $makeNumber;
             $item->name = ucwords($data->name);
             $item->description = $data->description;
-            $item->uom = $data->uom;
+            $item->uom = ucwords($data->uom);
             $item->status = $data->status;
             $item->save();
             DB::commit();
@@ -146,7 +146,7 @@ class SubCategoryController extends Controller
         $item->category_id = $data->category_id;
         $item->name = ucwords($data->name);
         $item->description = $data->description;
-        $item->uom = $data->uom;
+        $item->uom = ucwords($data->uom);
         $item->status = $data->status;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];

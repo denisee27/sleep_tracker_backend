@@ -13,13 +13,9 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('companies', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('name',128);
-            $table->boolean('status')->default(1);
-            $table->uuid('created_by')->nullable()->index();
-            $table->uuid('updated_by')->nullable()->index();
-            $table->timestamps(6);
+        Schema::table('users', function (Blueprint $table) {
+            $table->uuid('area_id')->nullable()->after('role_id');
+            $table->foreign('area_id')->references('id')->on('areas')->cascadeOnDelete();
         });
     }
 
@@ -30,6 +26,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('companies');
+        Schema::table('users');
     }
 };

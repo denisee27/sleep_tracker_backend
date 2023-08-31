@@ -2,19 +2,17 @@
 
 namespace App\Http\Controllers\CMS;
 
-use App\Http\Controllers\Controller;
-use App\Models\Role;
-use App\Models\User;
 use App\Models\Area;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class UserController extends Controller
+
+class AreaController extends Controller
 {
-    /**
+        /**
      * index
      *
      * @param  mixed $request
@@ -24,37 +22,18 @@ class UserController extends Controller
     public function index(Request $request, $id = null)
     {
         $data = [];
-        $items = User::query();
-        $items->orderBy('nik', 'asc');
-        $items->with([
-            'role:id,name',
-            'superior:id,name'
-        ]);
+        $items = Area::query();
+        $items->orderBy('name', 'asc');
 
         if (isset($request->filter) && $request->filter) {
             $filter = json_decode($request->filter, true);
             $items->where($filter);
         }
 
-        if(isset($request->self) && $request->self){
-            $items->whereNot(function ($q) use ($request){
-                $q->where('nik','super-admin')
-                ->orWhere('id',auth()->user()->id);
-            });
-        }
-
         if ($id == null) {
             if (isset($request->q) && $request->q) {
                 $q = $request->q;
-                $items->where(function ($query) use ($q) {
-                    $query->orWhere('name', 'like', '%' . $q . '%')
-                        ->orWhere('email', 'like', '%' . $q . '%')
-                        ->orWhere('nik', 'like', '%' . $q . '%')
-                        ->orWhere('phone', 'like', '%' . $q . '%')
-                        ->orWhereHas('role', function ($query) use ($q) {
-                            $query->where('name', 'like', '%' . $q . '%');
-                        });
-                });
+                $items->where('name', 'like', '%' . $q . '%');
             }
             if (isset($request->limit) && ((int) $request->limit) > 0) {
                 $data = $items->paginate(((int) $request->limit))->toArray();
@@ -78,17 +57,9 @@ class UserController extends Controller
      */
     public function create(Request $request)
     {
-        //abort(404);
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
-            'role_id' => ['required', 'string', Rule::exists(Role::class, 'id')],
-            'area_id' => ['required', 'string', Rule::exists(Area::class, 'id')],
-            'parent_id' => ['nullable', 'string', Rule::exists(User::class, 'id')],
-            'nik' => ['required', 'string', Rule::unique(User::class, 'nik')],
             'name' => 'required|string|max:128',
-            'email' => ['required', 'email', Rule::unique(User::class, 'email')],
-            'password' => 'required|string|min:6',
-            'phone' => 'nullable|string|max:32',
             'status' => 'required|numeric:in:0,1'
         ]);
         if ($validator->fails()) {
@@ -99,17 +70,11 @@ class UserController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = new User();
-        $item->role_id = $data->role_id;
-        $item->area_id = $data->area_id;
-        $item->parent_id = $data->parent_id;
-        $item->nik = $data->nik;
-        $item->name = $data->name;
-        $item->email = $data->email;
-        $item->phone = $data->phone;
-        $item->password = $this->pass_hash($data->password);
+        $item = new Area();
+        $item->name = ucwords($data->name);
         $item->status = $data->status;
         $item->save();
+
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
         return response()->json($r, Response::HTTP_OK);
     }
@@ -124,16 +89,9 @@ class UserController extends Controller
     {
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
-            'id' => ['required', 'string', Rule::exists(User::class, 'id')],
-            'role_id' => ['required', 'string', Rule::exists(Role::class, 'id')],
-            'area_id' => ['required', 'string', Rule::exists(Area::class, 'id')],
-            'parent_id' => ['nullable', 'string', Rule::exists(User::class, 'id')],
-            // 'nik' => ['required', 'string', Rule::unique(User::class, 'nik')->ignore($data['id'])],
-            // 'name' => 'required|string|max:128',
-            'email' => ['required', 'email', Rule::unique(User::class, 'email')->ignore($data['id'])],
-            // 'password' => 'nullable|string|min:6',
-            'phone' => 'nullable|string|max:32',
-            // 'status' => 'required|numeric:in:0,1'
+            'id' => ['required', 'string', Rule::exists(Area::class, 'id')],
+            'name' => 'required|string|max:128',
+            'status' => 'required|numeric:in:0,1'
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -143,18 +101,9 @@ class UserController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = User::where('id', $data->id)->first();
-        $item->role_id = $data->role_id;
-        $item->area_id = $data->area_id;
-        $item->parent_id = $data->parent_id;
-        // $item->nik = $data->nik;
-        // $item->name = $data->name;
-        $item->email = $data->email;
-        $item->phone = $data->phone;
-        // if ($data->password) {
-        //     $item->password = Hash::make($data->password);
-        // }
-        // $item->status = $data->status;
+        $item = Area::where('id', $data->id)->first();
+        $item->name = ucwords($data->name);
+        $item->status = $data->status;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
         return response()->json($r, Response::HTTP_OK);
@@ -169,7 +118,7 @@ class UserController extends Controller
     public function set_status(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => ['required', 'string', Rule::exists(User::class, 'id')],
+            'id' => ['required', 'string', Rule::exists(Area::class, 'id')],
             'status' => 'required|numeric:in:0,1'
         ]);
         if ($validator->fails()) {
@@ -180,7 +129,7 @@ class UserController extends Controller
         }
 
         $data = (object) $validator->validated();
-        $item = User::where('id', $data->id)->first();
+        $item = Area::where('id', $data->id)->first();
         $item->status = $data->status;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
@@ -196,12 +145,8 @@ class UserController extends Controller
     public function delete(Request $request)
     {
         $ids = json_decode($request->getContent());
-        User::whereIn('id', $ids)->delete();
+        Area::whereIn('id', $ids)->delete();
         return $this->index($request);
     }
 
-    protected function pass_hash($plain_password)
-    {
-        return sha1(md5(sha1($plain_password)) . 'Tr1@5M1TR4');
-    }
 }

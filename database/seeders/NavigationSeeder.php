@@ -29,7 +29,8 @@ class NavigationSeeder extends Seeder
 									   (11, NULL, 'Settings', 'settings', '', 'null', 2, 1, '2023-08-29 12:59:59', '2023-08-29 13:00:06'),
 									   (12, 11, 'Role', '', 'roles', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-29 13:00:44', '2023-08-29 13:00:44'),
 									   (13, 11, 'User Account', '', 'users', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-29 13:15:59', '2023-08-29 13:15:59'),
-									   (14, 11, 'Asset Controller', '', 'asset-controller', '[\"create\",\"update\",\"delete\"]', 2, 1, '2023-08-29 13:16:38', '2023-08-29 13:30:25');
+									   (14, 11, 'Asset Controller', '', 'asset-controller', '[\"create\",\"update\",\"delete\"]', 3, 1, '2023-08-29 13:16:38', '2023-08-31 19:36:29'),
+									   (15, 11, 'Set Area', '', 'areas', '[\"create\",\"update\",\"delete\"]', 2, 1, '2023-08-31 19:36:15', '2023-08-31 19:48:46');
 		";
         DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
         DB::table('navigations')->truncate();

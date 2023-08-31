@@ -3,9 +3,16 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Models\RequestAsset;
+use App\Models\RequestAssetDetail;
+use App\Models\SubCategory;
+use App\Models\Company;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class RequestAssetController extends Controller
 {
@@ -19,12 +26,16 @@ class RequestAssetController extends Controller
         $data = [];
         $items = RequestAsset::query();
         $items->orderBy('created_at', 'desc');
+        $items->with([
+            'company:id,code',
+            'creator:id,role_id,name',
+            'creator.role:id,name'
+        ]);
 
         if (isset($request->filter) && $request->filter) {
             $filter = json_decode($request->filter, true);
             $items->where($filter);
         }
-
         if ($id == null) {
             if (isset($request->q) && $request->q) {
                 $q = $request->q;
@@ -50,22 +61,72 @@ class RequestAssetController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function create(Request $request)
     {
-        //
+        $data = json_decode($request->data, true);
+        $validator = Validator::make($data, [
+            'company_id' => ['required', 'string', Rule::exists(Company::class, 'id')],
+            'date' => 'required|date_format:Y-m-d',
+            'notes' => 'nullable|string|max:255',
+            'details' => 'required|array',
+            'details.*.sub_category_id' => ['required', 'string', Rule::exists(SubCategory::class, 'id')],
+            'details.*.qty' => 'required|numeric|min:1',
+            'details.*.detail' => 'nullable|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
+                'wrong' => $validator->errors()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $data = (object) $validator->validated();
+        DB::beginTransaction();
+        try {
+            $getLast = RequestAsset::whereDate('created_at', Carbon::now()->format('Y-m-d'))
+                ->orderBy('created_at', 'DESC')
+                ->orderBy('number', 'DESC')
+                ->sharedLock()
+                ->first();
+            $lastNumber = (!$getLast) ? 0 : abs(substr($getLast->number, -3));
+            $makeNumber = Carbon::now()->format('ymd') . 'RQAST' . sprintf('%03s', $lastNumber + 1);
+            $cekNumber = RequestAsset::where('number', $makeNumber)->count();
+            if ($cekNumber > 0) {
+                DB::rollBack();
+                return response()->json([
+                    'status' => Response::HTTP_CONFLICT,
+                    'message' => 'Try again'
+                ], Response::HTTP_CONFLICT);
+            }
+            $item = new RequestAsset();
+            $item->company_id = $data->company_id;
+            $item->number = $makeNumber;
+            $item->request_date = $data->date;
+            $item->notes = $data->notes;
+            $item->created_by = auth()->user()->id;
+            $item->save();
+            foreach ($data->details as $_d) {
+                $detail = (object)$_d;
+                $poDetail = new RequestAssetDetail();
+                $poDetail->request_asset_id = $item->id;
+                $poDetail->sub_category_id = $detail->sub_category_id;
+                $poDetail->qty = $detail->qty;
+                $poDetail->description = $detail->detail;
+                $poDetail->uom = ucwords($detail->detail);
+                $poDetail->save();
+            }
+            $item->save();
+            // (new ApprovalService($item, 'purchase-orders'))->createApproval();
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+        $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
+        return response()->json($r, Response::HTTP_OK);
+
     }
 
     /**

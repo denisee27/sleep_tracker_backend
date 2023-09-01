@@ -51,6 +51,9 @@ class RequestAssetController extends Controller
                 $data['total'] = count($data['data']);
             }
         } else {
+            $items->with([
+                'details',
+            ]);
             $data['data'] = $items->where('id', $id)->first();
             $data['total'] = 1;
         }
@@ -68,7 +71,7 @@ class RequestAssetController extends Controller
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
             'company_id' => ['required', 'string', Rule::exists(Company::class, 'id')],
-            'date' => 'required|date_format:Y-m-d',
+            'request_date' => 'required|date_format:Y-m-d',
             'notes' => 'nullable|string|max:255',
             'details' => 'required|array',
             'details.*.sub_category_id' => ['required', 'string', Rule::exists(SubCategory::class, 'id')],
@@ -103,7 +106,7 @@ class RequestAssetController extends Controller
             $item = new RequestAsset();
             $item->company_id = $data->company_id;
             $item->number = $makeNumber;
-            $item->request_date = $data->date;
+            $item->request_date = $data->request_date;
             $item->notes = $data->notes;
             $item->created_by = auth()->user()->id;
             $item->save();

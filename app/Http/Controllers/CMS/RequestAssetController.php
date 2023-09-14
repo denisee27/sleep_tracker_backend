@@ -53,6 +53,7 @@ class RequestAssetController extends Controller
         } else {
             $items->with([
                 'details',
+                'details.subcategory:id,code,name,uom',
             ]);
             $data['data'] = $items->where('id', $id)->first();
             $data['total'] = 1;
@@ -117,7 +118,7 @@ class RequestAssetController extends Controller
                 $poDetail->sub_category_id = $detail->sub_category_id;
                 $poDetail->qty = $detail->qty;
                 $poDetail->description = $detail->detail;
-                $poDetail->uom = ucwords($detail->detail);
+                $poDetail->uom = ucwords($detail->uom);
                 $poDetail->save();
             }
             $item->save();
@@ -139,9 +140,64 @@ class RequestAssetController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        //
+        $data = json_decode($request->data, true);
+        $validator = Validator::make($data, [
+            'id' => ['required', 'string', Rule::exists(RequestAsset::class, 'id')],
+            'company_id' => ['required', 'string', Rule::exists(Company::class, 'id')],
+            'request_date' => 'required|date_format:Y-m-d',
+            'notes' => 'nullable|string|max:255',
+            'details' => 'required|array',
+            'details.*.sub_category_id' => ['required', 'string', Rule::exists(SubCategory::class, 'id')],
+            'details.*.qty' => 'required|numeric|min:1',
+            'details.*.detail' => 'nullable|string|max:255',
+            'details.*.uom' => 'nullable|string',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
+                'wrong' => $validator->errors()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $data = (object) $validator->validated();
+        DB::beginTransaction();
+        try {
+            
+            $item = RequestAsset::where('id', $data->id)->firstOrFail();
+            if ($item->status == -1) {
+                $approvalSvc = new ApprovalService($item, 'purchase-orders');
+                $approvalSvc->remove();
+                $item->status = 0;
+                $approvalSvc->createApproval();
+            }
+            $item->company_id = $data->company_id;
+            $item->request_date = $data->request_date;
+            $item->notes = $data->notes;
+            $item->updated_by = auth()->user()->id;
+            $item->save();
+            $item->details()->forceDelete();
+            foreach ($data->details as $row) {
+                $detail = (object)$row;
+                $requestDetail = new RequestAssetDetail();
+                $requestDetail->request_asset_id = $item->id;
+                $requestDetail->sub_category_id = $detail->sub_category_id;
+                $requestDetail->qty = $detail->qty;
+                $requestDetail->description = $detail->detail;
+                $requestDetail->uom = ucwords($detail->uom);
+                $requestDetail->save();
+            }
+            $item->save();
+            // (new ApprovalService($item, 'purchase-orders'))->createApproval();
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+        $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
+        return response()->json($r, Response::HTTP_OK);
+
     }
 
     /**

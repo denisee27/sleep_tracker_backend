@@ -21,4 +21,14 @@ class RequestAssetDetail extends BaseModel
     {
         return $this->belongsTo(RequestAsset::class);
     }
+
+    /**
+     * sub_category
+     *
+     * @return void
+     */
+    public function subcategory()
+    {
+        return $this->belongsTo(SubCategory::class,'sub_category_id');
+    }
 }

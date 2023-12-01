@@ -26,11 +26,14 @@ class NavigationSeeder extends Seeder
 									   (8, 4, 'Request New Asset', '', 'request-asset', '[\"create\",\"update\",\"delete\"]', 3, 1, '2023-08-29 12:53:00', '2023-08-29 12:54:00'),
 									   (9, 4, 'Purchase Order', '', 'purchase-orders', '[\"create\",\"update\",\"delete\"]', 4, 1, '2023-08-29 12:54:27', '2023-08-29 12:57:45'),
 									   (10, 4, 'Company', '', 'companies', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-29 12:56:05', '2023-08-29 12:56:05'),
-									   (11, NULL, 'Settings', 'settings', '', 'null', 2, 1, '2023-08-29 12:59:59', '2023-08-29 13:00:06'),
+									   (11, NULL, 'Settings', 'settings', '', 'null', 3, 1, '2023-08-29 12:59:59', '2023-09-15 09:32:14'),
 									   (12, 11, 'Role', '', 'roles', '[\"create\",\"update\",\"delete\"]', 0, 1, '2023-08-29 13:00:44', '2023-08-29 13:00:44'),
 									   (13, 11, 'User Account', '', 'users', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-08-29 13:15:59', '2023-08-29 13:15:59'),
 									   (14, 11, 'Asset Controller', '', 'asset-controller', '[\"create\",\"update\",\"delete\"]', 3, 1, '2023-08-29 13:16:38', '2023-08-31 19:36:29'),
-									   (15, 11, 'Set Area', '', 'areas', '[\"create\",\"update\",\"delete\"]', 2, 1, '2023-08-31 19:36:15', '2023-08-31 19:48:46');
+									   (15, 11, 'Set Area', '', 'areas', '[\"create\",\"update\",\"delete\"]', 2, 1, '2023-08-31 19:36:15', '2023-08-31 19:48:46'),
+									   (16, NULL, 'Asset Management', 'inventory_2', '', 'null', 2, 1, '2023-09-15 09:32:03', '2023-09-15 09:32:31'),
+									   (17, 16, 'List Asset', '', 'list-asset', '[\"update\",\"delete\"]', 0, 1, '2023-09-15 09:33:05', '2023-09-15 10:14:18'),
+									   (18, 16, 'Transfer Asset', '', 'transfer-asset', '[\"create\",\"update\",\"delete\"]', 1, 1, '2023-09-15 09:33:55', '2023-09-15 09:33:55');
 		";
         DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
         DB::table('navigations')->truncate();

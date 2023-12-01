@@ -41,7 +41,7 @@ class RequestAssetController extends Controller
                 $q = $request->q;
                 $items->where(function ($query) use ($q) {
                     $query->where('name', 'like', '%' . $q . '%')
-                        ->orWhere('code', 'like', '%' . $q . '%');
+                        ->orWhere('number', 'like', '%' . $q . '%');
                 });
             }
             if (isset($request->limit) && ((int) $request->limit) > 0) {
@@ -118,7 +118,6 @@ class RequestAssetController extends Controller
                 $poDetail->sub_category_id = $detail->sub_category_id;
                 $poDetail->qty = $detail->qty;
                 $poDetail->description = $detail->detail;
-                $poDetail->uom = ucwords($detail->uom);
                 $poDetail->save();
             }
             $item->save();
@@ -152,7 +151,6 @@ class RequestAssetController extends Controller
             'details.*.sub_category_id' => ['required', 'string', Rule::exists(SubCategory::class, 'id')],
             'details.*.qty' => 'required|numeric|min:1',
             'details.*.detail' => 'nullable|string|max:255',
-            'details.*.uom' => 'nullable|string',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -164,7 +162,7 @@ class RequestAssetController extends Controller
         $data = (object) $validator->validated();
         DB::beginTransaction();
         try {
-            
+
             $item = RequestAsset::where('id', $data->id)->firstOrFail();
             if ($item->status == -1) {
                 $approvalSvc = new ApprovalService($item, 'purchase-orders');
@@ -185,7 +183,6 @@ class RequestAssetController extends Controller
                 $requestDetail->sub_category_id = $detail->sub_category_id;
                 $requestDetail->qty = $detail->qty;
                 $requestDetail->description = $detail->detail;
-                $requestDetail->uom = ucwords($detail->uom);
                 $requestDetail->save();
             }
             $item->save();

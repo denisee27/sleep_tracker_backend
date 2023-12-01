@@ -18,8 +18,8 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
             $table->longText('image')->nullable()->after('description');
             $table->string('serial_number', 64)->nullable()->after('name')->unique();
-            $table->string('asset_number', 64)->nullable()->after('name')->unique();
-            $table->string('io_number', 64)->nullable('after_name');
+            $table->string('asset_number', 64)->nullable()->after('serial_number')->unique();
+            $table->string('io_number', 64)->nullable()->after('asset_number');
             $table->dropColumn('code');
         });
     }

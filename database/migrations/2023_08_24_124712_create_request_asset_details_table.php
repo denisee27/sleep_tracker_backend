@@ -21,7 +21,6 @@ return new class extends Migration
             $table->foreign('sub_category_id')->references('id')->on('sub_categories')->cascadeOnDelete();
             $table->text('description');
             $table->bigInteger('qty');
-            $table->string('uom', 32);
             $table->timestamps(6);
         });
     }

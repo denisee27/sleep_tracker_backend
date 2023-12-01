@@ -140,6 +140,14 @@ Route::group(['middleware' => 'auth'], function () {
         Route::delete('/delete', 'CMS\RequestAssetController@delete');
     });
 
+    Route::group(['prefix' => 'list-asset'], function () {
+        Route::get('/', 'CMS\ListAssetController@index');
+        Route::get('/{id:[a-zA-Z-?0-9]+}', 'CMS\ListAssetController@index');
+        Route::post('/create', 'CMS\ListAssetController@create');
+        Route::post('/update', 'CMS\ListAssetController@update');
+        Route::delete('/delete', 'CMS\ListAssetController@delete');
+    });
+
     Route::group(['prefix' => 'companies'], function () {
         Route::get('/', 'CMS\CompanyController@index');
         Route::get('/{id:[a-zA-Z-?0-9]+}', 'CMS\CompanyController@index');

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
-use App\Models\Role;
 use App\Models\User;
+use App\Models\JobMaster;
 use App\Models\Area;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -78,7 +78,6 @@ class UserController extends Controller
      */
     public function create(Request $request)
     {
-        //abort(404);
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
             'role_id' => ['required', 'string', Rule::exists(Role::class, 'id')],
@@ -125,15 +124,12 @@ class UserController extends Controller
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
             'id' => ['required', 'string', Rule::exists(User::class, 'id')],
-            'role_id' => ['required', 'string', Rule::exists(Role::class, 'id')],
-            'area_id' => ['required', 'string', Rule::exists(Area::class, 'id')],
-            'parent_id' => ['nullable', 'string', Rule::exists(User::class, 'id')],
-            // 'nik' => ['required', 'string', Rule::unique(User::class, 'nik')->ignore($data['id'])],
-            // 'name' => 'required|string|max:128',
-            'email' => ['required', 'email', Rule::unique(User::class, 'email')->ignore($data['id'])],
-            // 'password' => 'nullable|string|min:6',
-            'phone' => 'nullable|string|max:32',
-            // 'status' => 'required|numeric:in:0,1'
+            'name' => 'required|string|max:128',
+            'bod' => 'required|date_format:Y-m-d',
+            'job' => ['required', 'string', Rule::exists(JobMaster::class, 'id')],
+            'gender' => 'required|string:in:male,female',
+            'weight' => 'required|numeric',
+            'height' => 'required|numeric'
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -141,20 +137,25 @@ class UserController extends Controller
                 'wrong' => $validator->errors()
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-
         $data = (object) $validator->validated();
+        $bmi_category = '';
         $item = User::where('id', $data->id)->first();
-        $item->role_id = $data->role_id;
-        $item->area_id = $data->area_id;
-        $item->parent_id = $data->parent_id;
-        // $item->nik = $data->nik;
-        // $item->name = $data->name;
-        $item->email = $data->email;
-        $item->phone = $data->phone;
-        // if ($data->password) {
-        //     $item->password = Hash::make($data->password);
-        // }
-        // $item->status = $data->status;
+        $item->name = $data->name;
+        $item->job = $data->job;
+        $item->bod = $data->bod;
+        $item->gender = $data->gender;
+        $item->height = $data->height;
+        $item->weight = $data->weight;
+        $heightInMeter = $data->height / 100;
+        $bmi = $data->weight / ($heightInMeter * $heightInMeter);
+        if ($bmi < 25) {
+            $bmi_category = 'Normal';
+        } elseif ($bmi >= 25 && $bmi < 30) {
+            $bmi_category = 'Overweight';
+        } else {
+            $bmi_category = 'Obese';
+        }
+        $item->bmi = $bmi_category;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
         return response()->json($r, Response::HTTP_OK);

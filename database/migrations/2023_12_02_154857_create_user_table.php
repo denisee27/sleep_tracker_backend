@@ -15,18 +15,19 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->uuid('role_id');
-            $table->foreign('role_id')->references('id')->on('roles')->cascadeOnDelete();
-            $table->string('name', 128);
-            $table->string('nik', 128);
             $table->string('email', 128);
             $table->string('password', 64);
-            $table->boolean('status')->default(1);
+            $table->string('name', 128)->nullable();
+            $table->uuid('job')->nullable();
+            $table->foreign('job')->references('id')->on('job_lists')->cascadeOnDelete();
+            $table->date('bod')->nullable();
+            $table->string('gender',16)->nullable();
+            $table->string('bmi',16)->nullable();
+            $table->integer('height')->nullable();
+            $table->integer('weight')->nullable();
             $table->longText('profile_pic')->nullable();
             $table->string('verification_key')->nullable();
             $table->timestamp('last_login_at')->nullable();
-            $table->uuid('created_by')->nullable()->index();
-            $table->uuid('updated_by')->nullable()->index();
             $table->timestamps(6);
         });
     }

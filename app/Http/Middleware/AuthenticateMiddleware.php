@@ -33,13 +33,6 @@ class AuthenticateMiddleware
         if ($request->path() == 'auth/logout') {
             goto response;
         }
-        if ($user->status == -1) {
-            return $this->throwError($request, new AccessDeniedHttpException('Your account was blocked'));
-        }
-        if ($user->status == 0) {
-            return $this->throwError($request, new AccessDeniedHttpException('Your account is inactive'));
-        }
-
         if ($request->method() == 'GET' && !$request->wantsJson()) {
             return $next($request);
         }
@@ -59,38 +52,6 @@ class AuthenticateMiddleware
             goto response;
         }
 
-        $currrent_url = explode('/', $request->path());
-        $user_menu = $user->role->access;
-        $menu = DB::table('navigations')->where(['link' => $currrent_url[0]])->first(['action']);
-        if (!$menu) {
-            if ($user_menu[0] != '*') {
-                $this->throwError($request, new AccessDeniedHttpException('Access forbidden'));
-            } else {
-                goto response;
-            }
-        }
-        $menu_action = json_decode($menu->action ?? '[]') ?? [];
-        $action = array();
-        if ($user_menu[0] == '*') {
-            foreach ($menu_action as $a) {
-                $action[$a] = true;
-            }
-            goto response;
-        }
-        $user_menu = collect($user_menu);
-        $access_link = $user_menu->where('link', $currrent_url[0])->first();
-        if (!$access_link) {
-            return $this->throwError($request, new AccessDeniedHttpException('Access forbidden'));
-        }
-        $action = $access_link;
-        if (count($request_access)) {
-            if (!isset($action[$request_access[0]])) {
-                return $this->throwError($request, new AccessDeniedHttpException('Access forbidden'));
-            }
-            if (!$action[$request_access[0]]) {
-                return $this->throwError($request, new AccessDeniedHttpException('Access forbidden'));
-            }
-        }
         response:
         $response = $next($request);
         $response->header('X-Access', base64_encode(json_encode($action ?? null)));

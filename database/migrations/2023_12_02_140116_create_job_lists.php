@@ -13,9 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->uuid('parent_id')->nullable()->after('role_id');
-            $table->foreign('parent_id')->references('id')->on('users')->nullOnDelete();
+        Schema::create('job_masters', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('name',32);
+            $table->timestamps(6);
         });
     }
 
@@ -26,9 +27,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['parent_id']);
-            $table->dropColumn('parent_id');
-        });
+        Schema::dropIfExists('job_lists');
     }
 };

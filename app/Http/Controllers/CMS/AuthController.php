@@ -12,6 +12,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -47,7 +48,7 @@ class AuthController extends Controller
      */
     protected function pass_hash($plain_password)
     {
-        return sha1(md5(sha1($plain_password)) . 'Tr1@5M1TR4');
+        return sha1(md5(sha1($plain_password)) . 'S133ptr@ck3r');
     }
 
     /**
@@ -78,10 +79,6 @@ class AuthController extends Controller
         $key = 'email';
         $user = User::where($key, $request->email)->first();
         if (!$user) {
-            $key = 'nik';
-            $user = User::where($key, $request->email)->first();
-        }
-        if (!$user) {
             $this->incrementLoginAttempts($request);
             return response()->json([
                 'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
@@ -90,14 +87,7 @@ class AuthController extends Controller
                 ]
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-        if ($user->status != 1) {
-            $this->incrementLoginAttempts($request);
-            $status = $user->status == 0 ? 'not active yet' : ($user->status == -1 ? 'inactivated' : 'unknown');
-            return response()->json([
-                'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                'wrong' => ['email' => ['Your account is ' . $status]]
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
+    
         if ($user->password != $this->pass_hash($request->password)) {
             $this->incrementLoginAttempts($request);
             return response()->json([
@@ -114,6 +104,33 @@ class AuthController extends Controller
         $token = Auth::login($user);
         $this->clearLoginAttempts($request);
         return $this->createNewToken((string)$token);
+    }
+
+    /**
+     * register
+     *
+     * @param  Request $request
+     * @return void
+     */
+    public function register(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => ['required', 'string', Rule::unique(User::class, 'email')],
+            'password' => 'required|string|min:6',
+        ]);
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
+                'wrong' => $validator->errors()
+            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        $item = new User();
+        $item->email = $request->email;
+        $item->password = $this->pass_hash($request->password);
+        $item->save();
+      
+        $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
+        return response()->json($r, Response::HTTP_OK);
     }
 
     /**
@@ -202,10 +219,10 @@ class AuthController extends Controller
         $user = Auth::user();
         DB::table('users')->where('id', $user->id)->update(['last_login_at' => Carbon::now()]);
         $userData = [
+            'id' => $user->id,
             'name' => $user->name,
             'initials' => $user->initials,
             'email' => $user->email,
-            'role' => $user->role->name
         ];
         return response()->json([
             'status' => Response::HTTP_OK,

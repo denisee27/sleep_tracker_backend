@@ -162,33 +162,6 @@ class UserController extends Controller
     }
 
     /**
-     * set_status
-     *
-     * @param  mixed $request
-     * @return void
-     */
-    public function set_status(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'id' => ['required', 'string', Rule::exists(User::class, 'id')],
-            'status' => 'required|numeric:in:0,1'
-        ]);
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => Response::HTTP_UNPROCESSABLE_ENTITY,
-                'wrong' => $validator->errors()
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-
-        $data = (object) $validator->validated();
-        $item = User::where('id', $data->id)->first();
-        $item->status = $data->status;
-        $item->save();
-        $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
-        return response()->json($r, Response::HTTP_OK);
-    }
-
-    /**
      * delete
      *
      * @param  mixed $request

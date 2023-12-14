@@ -37,6 +37,13 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('/{id:[a-zA-Z-?0-9]+}', 'CMS\UserController@index');
         Route::post('/update', 'CMS\UserController@update');
     });
+
+    Route::group(['prefix' => 'sleep'], function () {
+        Route::get('/', 'CMS\SleepController@index');
+        Route::get('/{id:[a-zA-Z-?0-9]+}', 'CMS\SleepController@index');
+        Route::post('/create', 'CMS\SleepController@create');
+    });
+
     Route::group(['prefix' => 'jobs'], function () {
         Route::get('/', 'CMS\JobMasterController@index');
         Route::get('/{ibd:[a-zA-Z-?0-9]+}', 'CMS\JobMasterController@index');

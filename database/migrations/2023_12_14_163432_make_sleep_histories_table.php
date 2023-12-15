@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
             $table->timestamp('sleep_start')->nullable();
             $table->timestamp('sleep_end')->nullable();
-            $table->double('sleep_duration',2,1);
+            $table->double('sleep_duration',3,1);
             $table->integer('sleep_quality');
             $table->double('daily_scoring',3,1)->nullable();
             $table->string('sleep_result',64)->nullable();

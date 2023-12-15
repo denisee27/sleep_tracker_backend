@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\CMS;
 
 use App\Http\Controllers\Controller;
+use App\Models\SleepHistory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Validator;
 
 class SleepController extends Controller
 {
@@ -17,7 +21,7 @@ class SleepController extends Controller
     public function index(Request $request, $id = null)
     {
         $data = [];
-        $items = User::query();
+        $items = SleepHistory::query();
         $items->orderBy('nik', 'asc');
         $items->with([
             'role:id,name',
@@ -73,9 +77,9 @@ class SleepController extends Controller
     {
         $data = json_decode($request->data, true);
         $validator = Validator::make($data, [
-            'sleep_start' => 'required|date_format:Y-m-d H:i:s',
-            'sleep_end' => 'required|date_format:Y-m-d H:i:s',
-            'sleep_quality' => 'required|date_format:Y-m-d H:i:s',
+            'sleep_start' => 'required|date_format:Y-m-d H:i',
+            'sleep_end' => 'required|date_format:Y-m-d H:i',
+            'sleep_quality' => 'required|numeric',
         ]);
         if ($validator->fails()) {
             return response()->json([
@@ -87,12 +91,37 @@ class SleepController extends Controller
         $data = (object) $validator->validated();
         $item = new SleepHistory();
         $item->user_id = auth()->user()->id;
-        $item->sleep_start = $data->sleep_start;
-        $item->sleep_end = $data->sleep_end;
+        $sleepStart = Carbon::parse($data->sleep_start);
+        $sleepEnd = Carbon::parse($data->sleep_end);
+        $item->sleep_start = $sleepStart;
+        $item->sleep_end = $sleepEnd;
+        $minuteDuration = $sleepEnd->diffInMinutes($sleepStart);
+        $convertDuration = $minuteDuration / 60;
+        $convertDuration = round($convertDuration, 1);
+        $item->sleep_duration = $convertDuration;
         $item->sleep_quality = $data->sleep_quality;
-        $item->sleep_duration = $item->sleep_duration;
         $item->save();
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
+        return response()->json($r, Response::HTTP_OK);
+    }
+     /**
+     * create
+     *
+     * @param  mixed $request
+     * @return void
+     */
+    public function daily (Request $request)
+    {
+        $data = [];
+        $items = SleepHistory::query();
+        $items->orderBy('created_at', 'DESC');
+
+        // $data = $items->paginate(((int) $request->limit))->toArray();
+    
+        $data['data'] = $items->get();
+        // $data['total'] = count($data['data']);
+            
+        $r = ['status' => Response::HTTP_OK, 'result' => $data];
         return response()->json($r, Response::HTTP_OK);
     }
 }

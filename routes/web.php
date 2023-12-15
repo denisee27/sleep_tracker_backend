@@ -42,6 +42,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::get('/', 'CMS\SleepController@index');
         Route::get('/{id:[a-zA-Z-?0-9]+}', 'CMS\SleepController@index');
         Route::post('/create', 'CMS\SleepController@create');
+        Route::get('/daily', 'CMS\SleepController@daily');
     });
 
     Route::group(['prefix' => 'jobs'], function () {

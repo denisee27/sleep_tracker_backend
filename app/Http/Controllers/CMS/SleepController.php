@@ -5,6 +5,7 @@ namespace App\Http\Controllers\CMS;
 use App\Http\Controllers\Controller;
 use App\Models\SleepHistory;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Validator;
@@ -104,7 +105,7 @@ class SleepController extends Controller
         $r = ['status' => Response::HTTP_OK, 'result' => 'ok'];
         return response()->json($r, Response::HTTP_OK);
     }
-     /**
+    /**
      * create
      *
      * @param  mixed $request
@@ -114,14 +115,81 @@ class SleepController extends Controller
     {
         $data = [];
         $items = SleepHistory::query();
-        $items->orderBy('created_at', 'DESC');
-
-        // $data = $items->paginate(((int) $request->limit))->toArray();
-    
+        $items->where('created_at','<=',Carbon::today()->addDays(14));
+        $items->orderBy('created_at', 'DESC');    
         $data['data'] = $items->get();
-        // $data['total'] = count($data['data']);
-            
         $r = ['status' => Response::HTTP_OK, 'result' => $data];
         return response()->json($r, Response::HTTP_OK);
     }
+
+    
+    /**
+     * week
+     *
+     * @param  mixed $request
+     * @param  mixed $id
+     * @return void
+     */
+    public function week(Request $request)
+    {
+        $data['total']['average_duration'] = $this->get_average_duration();
+        $data['total']['total_duration'] = $this->get_total_duration();
+        $data['total']['average_sleep'] = $this->get_average_sleep();
+        $data['total']['average_wake'] = $this->get_average_wake();
+        $r = ['status' => Response::HTTP_OK, 'result' => $data];
+        return response()->json($r, Response::HTTP_OK);
+    }
+
+     /**
+     * get_average_duration
+     *
+     * @return void
+     */
+    private function get_average_duration()
+    {
+        $query = SleepHistory::query();
+        
+        $items = $query->get();
+        return ['result' => $items->average('sleep_duration') ?? 0.0];
+    }
+     /**
+     * get_total_duration
+     *
+     * @return void
+     */
+    private function get_total_duration()
+    {
+        $query = SleepHistory::query();
+        
+        $items = $query->get();
+        return ['result' => $items->sum('sleep_duration') ?? 0.0];
+    }
+
+   
+    /**
+     * get_average_sleep
+     *
+     * @return array
+     */
+    private function get_average_sleep()
+    {
+        $query = SleepHistory::query();
+        $averageSleep = $query->avg(DB::raw('UNIX_TIMESTAMP(sleep_start)'));
+        $result = date('H:i:s', $averageSleep);
+        return ['average_time' => $result];
+    }
+
+    /**
+     * get_average_wake
+     *
+     * @return array
+     */
+    private function get_average_wake()
+    {
+        $query = SleepHistory::query();
+        $averageWeek = $query->avg(DB::raw('UNIX_TIMESTAMP(sleep_end)'));
+        $result = date('H:i:s', $averageWeek);
+        return ['average_time' => $result];
+    }
+
 }

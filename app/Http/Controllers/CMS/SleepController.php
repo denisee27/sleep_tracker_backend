@@ -13,62 +13,6 @@ use Illuminate\Support\Facades\Validator;
 class SleepController extends Controller
 {
     /**
-     * index
-     *
-     * @param  mixed $request
-     * @param  mixed $id
-     * @return void
-     */
-    public function index(Request $request, $id = null)
-    {
-        $data = [];
-        $items = SleepHistory::query();
-        $items->orderBy('nik', 'asc');
-        $items->with([
-            'role:id,name',
-            'superior:id,name'
-        ]);
-
-        if (isset($request->filter) && $request->filter) {
-            $filter = json_decode($request->filter, true);
-            $items->where($filter);
-        }
-
-        if(isset($request->self) && $request->self){
-            $items->whereNot(function ($q) use ($request){
-                $q->where('nik','super-admin')
-                ->orWhere('id',auth()->user()->id);
-            });
-        }
-
-        if ($id == null) {
-            if (isset($request->q) && $request->q) {
-                $q = $request->q;
-                $items->where(function ($query) use ($q) {
-                    $query->orWhere('name', 'like', '%' . $q . '%')
-                        ->orWhere('email', 'like', '%' . $q . '%')
-                        ->orWhere('nik', 'like', '%' . $q . '%')
-                        ->orWhere('phone', 'like', '%' . $q . '%')
-                        ->orWhereHas('role', function ($query) use ($q) {
-                            $query->where('name', 'like', '%' . $q . '%');
-                        });
-                });
-            }
-            if (isset($request->limit) && ((int) $request->limit) > 0) {
-                $data = $items->paginate(((int) $request->limit))->toArray();
-            } else {
-                $data['data'] = $items->get();
-                $data['total'] = count($data['data']);
-            }
-        } else {
-            $data['data'] = $items->where('id', $id)->first();
-            $data['total'] = 1;
-        }
-        $r = ['status' => Response::HTTP_OK, 'result' => $data];
-        return response()->json($r, Response::HTTP_OK);
-    }
-
-    /**
      * create
      *
      * @param  mixed $request
@@ -115,6 +59,7 @@ class SleepController extends Controller
     {
         $data = [];
         $items = SleepHistory::query();
+        $items->where('user_id',auth()->user()->id);
         $items->where('created_at','<=',Carbon::today()->addDays(14));
         $items->orderBy('created_at', 'DESC');    
         $data['data'] = $items->get();
@@ -132,10 +77,14 @@ class SleepController extends Controller
      */
     public function week(Request $request)
     {
-        $data['total']['average_duration'] = $this->get_average_duration();
-        $data['total']['total_duration'] = $this->get_total_duration();
-        $data['total']['average_sleep'] = $this->get_average_sleep();
-        $data['total']['average_wake'] = $this->get_average_wake();
+        $data['average_duration'] = $this->get_average_duration();
+        $data['total_duration'] = $this->get_total_duration();
+        $data['average_sleep'] = $this->get_average_sleep();
+        $data['average_wake'] = $this->get_average_wake();
+        
+        $data['chart_duration'] = $this->get_chart_duration();
+        $data['line_Wake'] = $this->get_line_wake();
+        $data['line_sleep'] = $this->get_line_sleep();
         $r = ['status' => Response::HTTP_OK, 'result' => $data];
         return response()->json($r, Response::HTTP_OK);
     }
@@ -148,7 +97,7 @@ class SleepController extends Controller
     private function get_average_duration()
     {
         $query = SleepHistory::query();
-        
+        $query->where('user_id',auth()->user()->id);
         $items = $query->get();
         return ['result' => $items->average('sleep_duration') ?? 0.0];
     }
@@ -160,7 +109,7 @@ class SleepController extends Controller
     private function get_total_duration()
     {
         $query = SleepHistory::query();
-        
+        $query->where('user_id',auth()->user()->id);
         $items = $query->get();
         return ['result' => $items->sum('sleep_duration') ?? 0.0];
     }
@@ -174,6 +123,7 @@ class SleepController extends Controller
     private function get_average_sleep()
     {
         $query = SleepHistory::query();
+        $query->where('user_id',auth()->user()->id);
         $averageSleep = $query->avg(DB::raw('UNIX_TIMESTAMP(sleep_start)'));
         $result = date('H:i:s', $averageSleep);
         return ['average_time' => $result];
@@ -187,9 +137,73 @@ class SleepController extends Controller
     private function get_average_wake()
     {
         $query = SleepHistory::query();
+        $query->where('user_id',auth()->user()->id);
         $averageWeek = $query->avg(DB::raw('UNIX_TIMESTAMP(sleep_end)'));
         $result = date('H:i:s', $averageWeek);
         return ['average_time' => $result];
     }
 
+        /**
+     * getSleep
+     *
+     * @return mixed
+     */
+    private function getSleep()
+    {
+        return SleepHistory::where('user_id',auth()->user()->id)
+            ->orderBy('created_at', 'DESC')
+            ->get();
+    }
+
+    /**
+     * get_chart_Duration
+     *
+     * @return array
+     */
+    private function get_chart_Duration()
+    {
+    $items = [];
+    foreach ($this->getSleep() as $history) {
+        $items[] = [
+            'date' => $history->created_at,
+            'duration' => $history->sleep_duration,
+        ];
+    }
+    return $items;
+    }
+
+    /**
+     * get_line_wake
+     *
+     * @return array
+     */
+    private function get_line_wake()
+    {
+    $items = [];
+    foreach ($this->getSleep() as $history) {
+        $items[] = [
+            'wake' => $history->sleep_start,
+            'time' => date('h:i', strtotime($history->sleep_start)),
+        ];
+    }
+    return $items;
+    }
+
+    /**
+     * get_line_sleep
+     *
+     * @return array
+     */
+    private function get_line_sleep()
+    {
+    $items = [];
+    foreach ($this->getSleep() as $history) {
+        $items[] = [
+            'sleep' => $history->sleep_end,
+            'time' => date('h:i', strtotime($history->sleep_end)),
+        ];
+    }
+    return $items;
+    }
+    
 }

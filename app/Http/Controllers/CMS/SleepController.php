@@ -162,14 +162,25 @@ class SleepController extends Controller
      */
     private function get_chart_Duration()
     {
-    $items = [];
-    foreach ($this->getSleep() as $history) {
-        $items[] = [
-            'date' => $history->created_at,
-            'duration' => $history->sleep_duration,
-        ];
-    }
-    return $items;
+        $items = [];
+
+        foreach ($this->getSleep() as $history) {
+            $date = $history->created_at->toDateString(); // Ambil hanya tanggal dari timestamp
+            $duration = $history->sleep_duration;
+    
+            // Jika tanggal sudah ada, tambahkan durasi
+            if (array_key_exists($date, $items)) {
+                $items[$date]['duration'] += $duration;
+            } else {
+                // Jika tanggal belum ada, tambahkan data baru
+                $items[$date] = [
+                    'date' => $date,
+                    'duration' => $duration,
+                ];
+            }
+        }
+    
+        return array_values($items); // Ubah indeks array ke numeric
     }
 
     /**
@@ -183,7 +194,7 @@ class SleepController extends Controller
     foreach ($this->getSleep() as $history) {
         $items[] = [
             'wake' => $history->sleep_start,
-            'time' => date('h:i', strtotime($history->sleep_start)),
+            'time' => date('H:i:s', strtotime($history->sleep_start)),
         ];
     }
     return $items;

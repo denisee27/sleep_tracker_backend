@@ -13,6 +13,18 @@ use Illuminate\Support\Facades\Validator;
 
 class SleepWeekController extends Controller
 {
+    /**
+     * __construct
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $req = (object)request()->all();
+        $this->from = $req->from ?? Carbon::now()->subDays(7)->format('Y-m-d');
+        $this->to = $req->to ?? Carbon::now()->format('Y-m-d');
+    }
+
     
     /**
      * week
@@ -43,6 +55,7 @@ class SleepWeekController extends Controller
     private function get_average_duration()
     {
         $query = SleepHistory::query();
+        $query->whereBetween('created_at', [$this->from, $this->to]);
         $query->where('user_id',auth()->user()->id);
         $items = $query->get();
         return ['result' => $items->average('sleep_duration') ?? 0.0];
@@ -55,6 +68,7 @@ class SleepWeekController extends Controller
     private function get_total_duration()
     {
         $query = SleepHistory::query();
+        $query->whereBetween('created_at', [$this->from, $this->to]);
         $query->where('user_id',auth()->user()->id);
         $items = $query->get();
         return ['result' => $items->sum('sleep_duration') ?? 0.0];
@@ -69,6 +83,7 @@ class SleepWeekController extends Controller
     private function get_average_sleep()
     {
         $query = SleepHistory::query();
+        $query->whereBetween('created_at', [$this->from, $this->to]);
         $query->where('user_id',auth()->user()->id);
         $averageSleep = $query->avg(DB::raw('UNIX_TIMESTAMP(sleep_start)'));
         $result = date('H:i:s', $averageSleep);
@@ -83,6 +98,7 @@ class SleepWeekController extends Controller
     private function get_average_wake()
     {
         $query = SleepHistory::query();
+        $query->whereBetween('created_at', [$this->from, $this->to]);
         $query->where('user_id',auth()->user()->id);
         $averageWeek = $query->avg(DB::raw('UNIX_TIMESTAMP(sleep_end)'));
         $result = date('H:i:s', $averageWeek);
@@ -97,6 +113,7 @@ class SleepWeekController extends Controller
     private function getSleep()
     {
         return SleepHistory::where('user_id',auth()->user()->id)
+            ->whereBetween('created_at', [$this->from, $this->to])
             ->orderBy('created_at', 'DESC')
             ->get();
     }
@@ -109,16 +126,13 @@ class SleepWeekController extends Controller
     private function get_chart_Duration()
     {
         $items = [];
-
         foreach ($this->getSleep() as $history) {
             $date = $history->created_at->toDateString(); // Ambil hanya tanggal dari timestamp
             $duration = $history->sleep_duration;
     
-            // Jika tanggal sudah ada, tambahkan durasi
             if (array_key_exists($date, $items)) {
                 $items[$date]['duration'] += $duration;
             } else {
-                // Jika tanggal belum ada, tambahkan data baru
                 $items[$date] = [
                     'date' => $date,
                     'duration' => $duration,

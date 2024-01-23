@@ -12,6 +12,16 @@ use Illuminate\Support\Facades\Validator;
 
 class SleepMonthController extends Controller
 {
+           /**
+     * __construct
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $req = (object)request()->all();
+        $this->month = $req->from ?? Carbon::parse($req->month)->format('m');
+    }
     /**
      * month
      *
@@ -41,6 +51,7 @@ class SleepMonthController extends Controller
     private function get_average_duration()
     {
         $query = SleepHistory::query();
+        $query->whereMonth('created_at', '=', $this->month);
         $query->where('user_id',auth()->user()->id);
         $items = $query->get();
         return ['result' => $items->average('sleep_duration') ?? 0.0];
@@ -53,6 +64,7 @@ class SleepMonthController extends Controller
     private function get_total_duration()
     {
         $query = SleepHistory::query();
+        $query->whereMonth('created_at', '=', $this->month);
         $query->where('user_id',auth()->user()->id);
         $items = $query->get();
         return ['result' => $items->sum('sleep_duration') ?? 0.0];
@@ -67,6 +79,7 @@ class SleepMonthController extends Controller
     private function get_average_sleep()
     {
         $query = SleepHistory::query();
+        $query->whereMonth('created_at', '=', $this->month);
         $query->where('user_id',auth()->user()->id);
         $averageSleep = $query->avg(DB::raw('UNIX_TIMESTAMP(sleep_start)'));
         $result = date('H:i:s', $averageSleep);
@@ -81,6 +94,7 @@ class SleepMonthController extends Controller
     private function get_average_wake()
     {
         $query = SleepHistory::query();
+        $query->whereMonth('created_at', '=', $this->month);
         $query->where('user_id',auth()->user()->id);
         $averagemonth = $query->avg(DB::raw('UNIX_TIMESTAMP(sleep_end)'));
         $result = date('H:i:s', $averagemonth);
@@ -95,6 +109,7 @@ class SleepMonthController extends Controller
     private function getSleep()
     {
         return SleepHistory::where('user_id',auth()->user()->id)
+            ->whereMonth('created_at', '=', $this->month)
             ->orderBy('created_at', 'DESC')
             ->get();
     }

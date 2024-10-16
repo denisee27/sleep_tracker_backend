@@ -54,4 +54,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::post('/update', 'CMS\JobMasterController@update');
         Route::delete('/delete', 'CMS\JobMasterController@delete');
     });
+    Route::group(['prefix' => 'types'], function () {
+        Route::post('/create', 'CMS\TypeController@create');
+    });
 });
